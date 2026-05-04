@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance-flow</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="auth-screen" class="screen">
+        <h1>Finance-flow</h1>
+        <form id="login-form">
+            <input type="email" id="l-email" placeholder="Email" required>
+            <input type="password" id="l-pass" placeholder="Пароль" required>
+            <button type="submit">Войти</button>
+        </form>
+        <p class="switch">Нет аккаунта? <a href="#" id="show-reg">Зарегистрироваться</a></p>
+    </div>
 
+    <div id="reg-screen" class="screen hidden">
+        <h1>Регистрация</h1>
+        <form id="reg-form">
+            <input type="text" id="r-name" placeholder="Имя" required>
+            <input type="email" id="r-email" placeholder="Email" required>
+            <input type="password" id="r-pass" placeholder="Пароль (≥8 символов)" required>
+            <button type="submit">Создать аккаунт</button>
+        </form>
+        <p class="switch">Уже есть? <a href="#" id="show-login">Войти</a></p>
+    </div>
+
+    <div id="app-screen" class="screen hidden">
+        <header>
+            <h2>Привет, <span id="user-name"></span>!</h2>
+            <button id="logout">Выйти</button>
+        </header>
+        <main>
+            <section id="dashboard">
+                <div class="card">
+                    <h3>Баланс</h3>
+                    <p id="balance">0 ₽</p>
+                </div>
+                <div class="card chart-container">
+                    <canvas id="expense-chart"></canvas>
+                </div>
+            </section>
+            <section id="controls">
+                <form id="tx-form">
+                    <input type="number" id="tx-amount" step="0.01" placeholder="Сумма" required>
+                    <select id="tx-type"><option value="expense">Расход</option><option value="income">Доход</option></select>
+                    <select id="tx-cat" required></select>
+                    <input type="text" id="tx-comment" placeholder="Комментарий">
+                    <button type="submit">Сохранить</button>
+                </form>
+                <button id="export-btn">📥 Экспорт в CSV</button>
+            </section>
+            <section id="tx-list">
+                <h3>История</h3>
+                <ul id="transactions"></ul>
+            </section>
+        </main>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
