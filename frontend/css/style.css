@@ -1,0 +1,23 @@
+:root {
+    --bg: #0A8F57;
+    --text: #04040F;
+    --accent: #1B86C4;
+    --card: rgba(255,255,255,0.95);
+}
+body { margin:0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
+.screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:20px; box-sizing:border-box; }
+.hidden { display:none !important; }
+input, select, button { width:100%; padding:12px; margin:8px 0; border:1px solid #ccc; border-radius:8px; font-size:16px; }
+button { background: var(--accent); color:white; border:none; cursor:pointer; font-weight:bold; }
+button:hover { opacity:0.9; }
+.card { background: var(--card); padding:20px; border-radius:12px; margin:10px 0; width:100%; max-width:400px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+.chart-container { padding:10px; height:250px; }
+#tx-list { width:100%; max-width:400px; }
+ul { list-style:none; padding:0; }
+li { background: var(--card); margin:5px 0; padding:10px; border-radius:6px; display:flex; justify-content:space-between; }
+.income { color:green; font-weight:bold; }
+.expense { color:red; font-weight:bold; }
+@media (max-width: 480px) {
+    .card, #tx-list, form { max-width:100%; }
+    input, select, button { font-size:14px; }
+}
