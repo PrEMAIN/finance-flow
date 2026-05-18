@@ -1,65 +1,207 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance-flow</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance-flow — учёт личных финансов</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div id="auth-screen" class="screen">
-        <h1>Finance-flow</h1>
-        <form id="login-form">
-            <input type="email" id="l-email" placeholder="Email" required>
-            <input type="password" id="l-pass" placeholder="Пароль" required>
-            <button type="submit">Войти</button>
-        </form>
-        <p class="switch">Нет аккаунта? <a href="#" id="show-reg">Зарегистрироваться</a></p>
-    </div>
+  <div id="toast-container" class="toast-container"></div>
 
-    <div id="reg-screen" class="screen hidden">
-        <h1>Регистрация</h1>
-        <form id="reg-form">
-            <input type="text" id="r-name" placeholder="Имя" required>
-            <input type="email" id="r-email" placeholder="Email" required>
-            <input type="password" id="r-pass" placeholder="Пароль (≥8 символов)" required>
-            <button type="submit">Создать аккаунт</button>
-        </form>
-        <p class="switch">Уже есть? <a href="#" id="show-login">Войти</a></p>
+  <!-- Авторизация -->
+  <section id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="brand">
+        <div class="brand-icon">₽</div>
+        <div>
+          <h1>Finance-flow</h1>
+          <p>Учёт личных финансов</p>
+        </div>
+      </div>
+      <div class="tabs">
+        <button type="button" class="tab active" data-auth-tab="login">Вход</button>
+        <button type="button" class="tab" data-auth-tab="register">Регистрация</button>
+      </div>
+      <form id="login-form">
+        <label>Email<input type="email" name="email" required placeholder="user@example.com" /></label>
+        <label>Пароль<input type="password" name="password" required minlength="6" /></label>
+        <p class="error-text" id="login-error"></p>
+        <button type="submit" class="btn btn-primary">Войти</button>
+      </form>
+      <form id="register-form" class="hidden">
+        <label>Имя<input type="text" name="name" required placeholder="Алексей" /></label>
+        <label>Email<input type="email" name="email" required placeholder="user@example.com" /></label>
+        <label>Пароль<input type="password" name="password" required minlength="6" /></label>
+        <p class="error-text" id="register-error"></p>
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+      </form>
     </div>
+  </section>
 
-    <div id="app-screen" class="screen hidden">
-        <header>
-            <h2>Привет, <span id="user-name"></span>!</h2>
-            <button id="logout">Выйти</button>
-        </header>
-        <main>
-            <section id="dashboard">
-                <div class="card">
-                    <h3>Баланс</h3>
-                    <p id="balance">0 ₽</p>
-                </div>
-                <div class="card chart-container">
-                    <canvas id="expense-chart"></canvas>
-                </div>
-            </section>
-            <section id="controls">
-                <form id="tx-form">
-                    <input type="number" id="tx-amount" step="0.01" placeholder="Сумма" required>
-                    <select id="tx-type"><option value="expense">Расход</option><option value="income">Доход</option></select>
-                    <select id="tx-cat" required></select>
-                    <input type="text" id="tx-comment" placeholder="Комментарий">
-                    <button type="submit">Сохранить</button>
-                </form>
-                <button id="export-btn">📥 Экспорт в CSV</button>
-            </section>
-            <section id="tx-list">
-                <h3>История</h3>
-                <ul id="transactions"></ul>
-            </section>
-        </main>
+  <!-- Основное приложение -->
+  <div id="app-screen" class="app-shell hidden">
+    <header class="app-header">
+      <h1>Finance-flow</h1>
+      <div class="header-actions">
+        <button type="button" class="notification-btn" id="notifications-btn" title="Уведомления">
+          🔔<span class="badge hidden" id="notif-badge">0</span>
+        </button>
+        <span class="user-badge" id="user-name">Пользователь</span>
+        <button type="button" class="btn btn-secondary" id="logout-btn">Выйти</button>
+      </div>
+    </header>
+
+    <nav class="nav-tabs" id="nav-tabs">
+      <button class="nav-tab active" data-panel="dashboard">Главная</button>
+      <button class="nav-tab" data-panel="transactions">Транзакции</button>
+      <button class="nav-tab" data-panel="limits">Лимиты</button>
+      <button class="nav-tab" data-panel="goals">Цели</button>
+      <button class="nav-tab" data-panel="achievements">Достижения</button>
+      <button class="nav-tab" data-panel="categories">Категории</button>
+    </nav>
+
+    <!-- Главная -->
+    <section id="panel-dashboard" class="panel active">
+      <div class="summary-cards" id="summary-cards"></div>
+      <div class="quick-actions">
+        <button type="button" class="btn btn-expense" id="quick-expense">+ Расход</button>
+        <button type="button" class="btn btn-income" id="quick-income">+ Доход</button>
+        <button type="button" class="btn btn-secondary" id="export-csv">Экспорт CSV</button>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Расходы по категориям</h2>
+          <label>Период
+            <select id="chart-period">
+              <option value="day">День</option>
+              <option value="week">Неделя</option>
+              <option value="month" selected>Месяц</option>
+            </select>
+          </label>
+          <div class="chart-wrap"><canvas id="expense-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Последние операции</h2>
+          <div id="recent-transactions" class="transaction-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Транзакции -->
+    <section id="panel-transactions" class="panel">
+      <div class="card">
+        <div class="quick-actions">
+          <button type="button" class="btn btn-expense" data-open-tx="expense">+ Расход</button>
+          <button type="button" class="btn btn-income" data-open-tx="income">+ Доход</button>
+        </div>
+        <div class="filters">
+          <label>Тип<select id="filter-type"><option value="">Все</option><option value="expense">Расход</option><option value="income">Доход</option></select></label>
+          <label>Категория<select id="filter-category"><option value="">Все</option></select></label>
+          <label>С<input type="date" id="filter-from" /></label>
+          <label>По<input type="date" id="filter-to" /></label>
+          <label>Мин.<input type="number" id="filter-min" min="0" step="0.01" /></label>
+          <label>Макс.<input type="number" id="filter-max" min="0" step="0.01" /></label>
+        </div>
+        <button type="button" class="btn btn-primary" id="apply-filters">Применить фильтры</button>
+        <div id="all-transactions" class="transaction-list" style="margin-top:1rem"></div>
+      </div>
+    </section>
+
+    <!-- Лимиты -->
+    <section id="panel-limits" class="panel">
+      <div class="card">
+        <h2>Бюджетные лимиты</h2>
+        <form id="limit-form" class="filters">
+          <label>Категория<select name="categoryId" required id="limit-category"></select></label>
+          <label>Лимит (₽)<input type="number" name="amount" min="1" step="0.01" required /></label>
+          <button type="submit" class="btn btn-primary">Установить лимит</button>
+        </form>
+        <div id="limits-list"></div>
+      </div>
+    </section>
+
+    <!-- Цели -->
+    <section id="panel-goals" class="panel">
+      <div class="card">
+        <h2>Финансовые цели</h2>
+        <form id="goal-form">
+          <label>Описание<input type="text" name="description" required placeholder="Новый ноутбук" /></label>
+          <label>Целевая сумма<input type="number" name="targetAmount" min="1" step="0.01" required /></label>
+          <label>Срок<input type="date" name="deadline" /></label>
+          <button type="submit" class="btn btn-primary">Создать цель</button>
+        </form>
+        <div id="goals-list" style="margin-top:1rem"></div>
+      </div>
+    </section>
+
+    <!-- Достижения -->
+    <section id="panel-achievements" class="panel">
+      <div class="card">
+        <h2>Достижения</h2>
+        <div id="achievements-grid" class="achievement-grid"></div>
+      </div>
+    </section>
+
+    <!-- Категории -->
+    <section id="panel-categories" class="panel">
+      <div class="card">
+        <h2>Категории</h2>
+        <form id="category-form" class="filters">
+          <label>Название<input type="text" name="name" required /></label>
+          <label>Иконка<input type="text" name="icon" maxlength="4" placeholder="📁" /></label>
+          <label>Цвет<input type="color" name="color" value="#1B86C4" /></label>
+          <button type="submit" class="btn btn-primary">Добавить</button>
+        </form>
+        <div id="categories-list" style="margin-top:1rem"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Модальное окно транзакции -->
+  <div id="tx-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="tx-modal-title">Добавить транзакцию</h3>
+      <form id="tx-form">
+        <input type="hidden" name="type" id="tx-type" value="expense" />
+        <label>Сумма (₽)<input type="number" name="amount" min="0.01" step="0.01" required /></label>
+        <label>Категория<select name="categoryId" id="tx-category" required></select></label>
+        <label>Дата<input type="datetime-local" name="date" id="tx-date" /></label>
+        <label>Комментарий<textarea name="comment" rows="2"></textarea></label>
+        <p class="error-text" id="tx-error"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="tx-cancel">Отмена</button>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+      </form>
     </div>
-    <script src="js/script.js"></script>
+  </div>
+
+  <!-- Подтверждение удаления -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Подтверждение</h3>
+      <p id="confirm-text"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="confirm-cancel">Отмена</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Уведомления -->
+  <div id="notifications-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:520px">
+      <h3>Уведомления</h3>
+      <div id="notifications-list"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="mark-all-read">Прочитать все</button>
+        <button type="button" class="btn btn-primary" id="close-notifications">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>
